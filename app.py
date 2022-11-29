@@ -16,6 +16,7 @@ from linebot.models import *
 import re
 
 import requests
+import json
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -85,11 +86,11 @@ zodiacSigns_lst = [
 ]
 
 cityId_dict = {
-    '63': ['台北市', '臺北市', '台北', '臺北'],
+    '63': ['臺北市', '台北市', '台北', '臺北'],
     '64': ['高雄市', '高雄'],
     '65': ['新北市', '新北'],
-    '66': ['台中市', '臺中市', '台中', '臺中'],
-    '67': ['台南市', '臺南市', '台南', '臺南'],
+    '66': ['臺中市', '台中市', '台中', '臺中'],
+    '67': ['臺南市', '台南市', '台南', '臺南'],
     '68': ['桃園市', '桃園'],
     '10018': ['新竹市', '新竹'],
     '10004': '新竹縣',
@@ -103,7 +104,7 @@ cityId_dict = {
     '10013': ['屏東縣', '屏東'],
     '10002': ['宜蘭縣', '宜蘭'],
     '10015': ['花蓮縣', '花蓮'],
-    '10014': ['台東縣', '臺東縣', '台東', '臺東'],
+    '10014': ['臺東縣', '台東縣', '台東', '臺東'],
     '10016': ['澎湖縣', '澎湖'],
     '09020': ['金門縣', '金門'],
     '09007': ['連江縣', '連江']
@@ -118,24 +119,9 @@ cityId_lst = ['台北市', '臺北市', '台北', '臺北', '高雄市', '高雄
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
-    print(event.reply_token)
-    print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
-
-    '''
-    台北
-    c1bdd55e83d04a248882b4f22edec26f
-
-    巨
-    c654a6482d89427bb7282b6ec74eee58
-
-    射
-    02349b55696144739647f2e2431f1626
-
-    雙
-    fc65e65d08ad4a099a1847e82d9ae248
-    c1bdd55e83d04a248882b4f22edec26f
-    '''
+    # print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    # print(event.reply_token)
+    # print('!!!!!!!!!!!!!!!!!!!!!!!!!!')
 
     if "查詢油價" in event.message.text:
         oil_res = oilPrice()
@@ -158,9 +144,11 @@ def handle_message(event):
 
     # 天氣預報
     elif event.message.text in [i for i in cityId_lst]:
-        key = [int(k)
-               for k, v in cityId_dict.items() if event.message.text in v]
-        weather_res = weather(key)
+        city = [v[0]
+                for k, v in cityId_dict.items() if event.message.text in v]
+        # key = [int(k)
+        #        for k, v in cityId_dict.items() if event.message.text in v]
+        weather_res = weather(city[0])
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
             text=f'{weather_res}'))
 
@@ -171,22 +159,41 @@ def handle_message(event):
     return True
 
 
-def weather(key):
+def weather(city):
     web = requests.get(
-        f'https://www.cwb.gov.tw/V8/C/W/County/County.html?CID={key}')
-    soup = BeautifulSoup(web.content, "html.parser")
-
+        f'https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=CWB-8F31035E-1873-4255-BF9C-44C035507136')
+    web_json = web.json()
     web.close()
+    locations = web_json['records']['location']
 
-    city = soup.find('h2', {'class': 'main-title'}
-                     ).text.strip().split(' - ')[1]
+    # 3個array裡面的值都是以下順序：[天氣描述, 降雨機率, 最低溫, 舒適度, 最高溫]
+    first_timming = []
+    second_timming = []
+    third_timming = []
+    start_time0 = ''
+    start_time1 = ''
+    start_time2 = ''
+    end_time0 = ''
+    end_time1 = ''
+    end_time2 = ''
+    for i in locations:
+        if city == i['locationName']:
+            for j in i['weatherElement']:
+                start_time0 = j['time'][0]['startTime'][:-3]
+                end_time0 = j['time'][0]['endTime'][:-3]
+                start_time1 = j['time'][1]['startTime'][:-3]
+                end_time1 = j['time'][1]['endTime'][:-3]
+                start_time2 = j['time'][2]['startTime'][:-3]
+                end_time2 = j['time'][2]['endTime'][:-3]
+                first_timming.append(
+                    j['time'][0]['parameter']['parameterName'])
+                second_timming.append(
+                    j['time'][1]['parameter']['parameterName'])
+                third_timming.append(
+                    j['time'][2]['parameter']['parameterName'])
 
-    rain_ratio = soup.find('span', {'class': 'rain'})
-    print(rain_ratio)
+    res = f'〖{city} 36小時天氣預報〗\n\n[{start_time0}~{end_time0}]\n天氣現象: {first_timming[0]}\n降雨率: {first_timming[1]}\n溫度: {first_timming[2]}°C~{first_timming[4]}°C\n舒適度: {first_timming[3]}\n\n[{start_time1}~{end_time1}]\n天氣現象: {second_timming[0]}\n降雨率: {second_timming[1]}\n溫度: {second_timming[2]}°C~{second_timming[4]}°C\n舒適度: {second_timming[3]}\n\n[{start_time2}~{end_time2}]\n天氣現象: {third_timming[0]}\n降雨率: {third_timming[1]}\n溫度: {third_timming[2]}°C~{third_timming[4]}°C\n舒適度: {third_timming[3]}'
 
-    res = f'〖{city} 今明天氣預報〗\n\n'
-
-    # res += time1
     return res
 
 
