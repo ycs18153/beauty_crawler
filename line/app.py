@@ -284,7 +284,7 @@ def handle_message(event):
             return '200'
 
     elif "油價 開" in event.message.text or "油價 關" in event.message.text:
-        if manager_check(event.source.group_id, event.source.user_id):
+        if manager_check(event.source.group_id, line_bot_api.get_profile(event.source.user_id).display_name):
             message = event.message.text
             open_close = message.split(' ')[1]
             if open_close == '開':
@@ -309,7 +309,7 @@ def handle_message(event):
             return '200'
 
     elif "匯率 開" in event.message.text or "匯率 關" in event.message.text:
-        if manager_check(event.source.group_id, event.source.user_id):
+        if manager_check(event.source.group_id, line_bot_api.get_profile(event.source.user_id).display_name):
             message = event.message.text
             open_close = message.split(' ')[1]
             if open_close == '開':
@@ -334,7 +334,7 @@ def handle_message(event):
             return '200'
 
     elif "星座 開" in event.message.text or "星座 關" in event.message.text:
-        if manager_check(event.source.group_id, event.source.user_id):
+        if manager_check(event.source.group_id, line_bot_api.get_profile(event.source.user_id).display_name):
             message = event.message.text
             open_close = message.split(' ')[1]
             if open_close == '開':
@@ -359,7 +359,7 @@ def handle_message(event):
             return '200'
 
     elif "天氣 開" in event.message.text or "天氣 關" in event.message.text:
-        if manager_check(event.source.group_id, event.source.user_id):
+        if manager_check(event.source.group_id, line_bot_api.get_profile(event.source.user_id).display_name):
             message = event.message.text
             open_close = message.split(' ')[1]
             if open_close == '開':
@@ -381,7 +381,7 @@ def handle_message(event):
                 event.reply_token, TextSendMessage(text=f'你沒有這個權限ㄛ'))
             return '200'
     elif '新增管理員' in event.message.text:
-        if manager_check(event.source.group_id, event.source.user_id):
+        if manager_check(event.source.group_id, line_bot_api.get_profile(event.source.user_id).display_name):
             message = event.message.text
             members = message.split(' @')[1:]
             for i in members:
