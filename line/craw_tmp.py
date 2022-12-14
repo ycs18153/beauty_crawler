@@ -6,7 +6,7 @@ from pymongo import MongoClient
 import certifi
 
 mongoClient = pymongo.MongoClient(
-    "mongodb+srv://andy:acdwsx321@groupmagt.cgjzv3a.mongodb.net/?retryWrites=true&w=majority", tlsCAFile=certifi.where())  # 要連結到的 connect string
+    "mongodb+srv://<user>:<password>@groupmagt.cgjzv3a.mongodb.net/?retryWrites=true&w=majority", tlsCAFile=certifi.where())  # 要連結到的 connect string
 groupMagt = mongoClient["groupMagt"]  # 指定資料庫
 zodiac_sign_table = groupMagt["zodiac_sign"]  # 指定資料表
 
